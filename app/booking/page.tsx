@@ -100,7 +100,7 @@ function BookingPageContent() {
   }, [days, selectedDay]);
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -153,8 +153,9 @@ function BookingPageContent() {
 
   const canProceed = () => {
     if (currentStep === 1) return true;
-    if (currentStep === 2) return selectedDay !== null;
-    if (currentStep === 3) return selectedTimeSlot !== null;
+    if (currentStep === 2) return selectedStylist !== null;
+    if (currentStep === 3) return selectedDay !== null;
+    if (currentStep === 4) return selectedTimeSlot !== null;
     return true;
   };
 
@@ -162,7 +163,7 @@ function BookingPageContent() {
     <CustomerLayout
       showBottomNav={true}
       headerProps={{
-        title: `STEP ${currentStep} OF 4`,
+        title: `STEP ${currentStep} OF 5`,
         showBackButton: currentStep > 1,
         onBackClick: handleBack,
       }}
@@ -173,7 +174,7 @@ function BookingPageContent() {
         <div className="w-full bg-gray-100 dark:bg-gray-800 h-1 shrink-0 relative overflow-hidden">
           <div 
             className="bg-gradient-to-r from-amber-400 to-amber-600 shadow-[0_1px_6px_rgba(245,158,11,0.25)] h-full transition-all duration-300 ease-in-out" 
-            style={{ width: `${(currentStep / 4) * 100}%` }}
+            style={{ width: `${(currentStep / 5) * 100}%` }}
           />
         </div>
 
@@ -579,11 +580,11 @@ function BookingPageContent() {
           <Button
             variant="primary"
             disabled={!canProceed()}
-            onClick={currentStep === 4 ? handleConfirm : handleNext}
+            onClick={currentStep === 5 ? handleConfirm : handleNext}
             size="default"
             className="flex-1 rounded-2xl py-4 text-sm font-bold"
           >
-            {currentStep === 4 
+            {currentStep === 5 
               ? paymentMethod === "online"
                 ? `Complete Payment & Book` 
                 : `Confirm Booking • Pay at Checkout` 
