@@ -262,7 +262,7 @@ function BookingPageContent() {
                       className={cn(
                         "flex items-center justify-between p-4.5 rounded-2xl border text-left cursor-pointer transition-all duration-150 active:scale-[0.99] select-none",
                         isSelected
-                          ? "bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100 shadow-2xs ring-1 ring-gray-900 dark:ring-gray-100"
+                          ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/60 shadow-2xs"
                           : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 hover:bg-white dark:hover:bg-gray-850"
                       )}
                     >
@@ -772,7 +772,7 @@ function BookingPageContent() {
                 setIsConfirming(false);
                 router.push("/browse-services"); // Return home browse services
               }}
-              className="w-full rounded-2xl py-3.5 text-xs font-extrabold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-350 border-gray-200 dark:border-gray-700"
+              className="w-full rounded-2xl py-3.5 text-xs font-extrabold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-300 border-gray-200 dark:border-gray-700"
             >
               Return to Catalog Menu
             </Button>
@@ -788,7 +788,7 @@ export default function BookingPage() {
   return (
     <React.Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 transition-colors duration-200">
-        <div className="animate-pulse text-xs font-bold text-gray-405 dark:text-gray-500">Loading booking portal...</div>
+        <div className="animate-pulse text-xs font-bold text-gray-400 dark:text-gray-500">Loading booking portal...</div>
       </div>
     }>
       <BookingPageContent />
