@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #111827;
+  --border: #e5e7eb;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --muted: #111111;
+  --muted-foreground: #737373;
+  --accent: #ededed;
+  --border: #1f1f1f;
+
+  /* Override Tailwind gray scale → true neutral blacks (Cursor.com palette) */
+  --color-gray-950: #080808;
+  --color-gray-900: #111111;
+  --color-gray-800: #1c1c1c;
+  --color-gray-700: #2a2a2a;
+  --color-gray-600: #404040;
+  --color-gray-500: #737373;
+  --color-gray-400: #a3a3a3;
+  --color-gray-300: #d4d4d4;
+  --color-gray-200: #e5e5e5;
+  --color-gray-100: #f0f0f0;
+  --color-gray-50: #fafafa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  
+  --animate-fade-in: fadeIn 1s ease-in-out forwards;
+  --animate-slide-in-right: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in-quick: fadeInQuick 0.2s ease-out forwards;
+  --animate-expand-pill: expandPill 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-expand-container: expandContainer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-page-in: pageIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-admin-in: adminIn 0.4s ease-out forwards;
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes fadeInQuick {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pageIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes adminIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes expandPill {
+    from {
+      max-width: 0px;
+      opacity: 0;
+      margin-left: 0px;
+    }
+    to {
+      max-width: 80px;
+      opacity: 1;
+      margin-left: 6px;
+    }
+  }
+  @keyframes expandContainer {
+    from {
+      background-color: transparent;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    to {
+      background-color: #ffffff;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, ::before, ::after {
+  border-color: var(--border);
+}
