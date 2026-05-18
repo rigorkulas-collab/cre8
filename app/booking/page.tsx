@@ -229,8 +229,87 @@ function BookingPageContent() {
             </div>
           )}
 
-          {/* STEP 2: DATE SELECTION */}
+          {/* STEP 2: STYLIST SELECTION [NEW] */}
           {currentStep === 2 && (
+            <div className="flex flex-col gap-6 animate-fade-in-quick">
+              <div className="flex flex-col gap-1.5 text-center pt-2">
+                <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-wide leading-none">
+                  Select Styling Professional
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
+                  Choose a favorite specialist or pick any stylist for the first available slot
+                </p>
+              </div>
+
+              {/* Stylists Vertical Stack */}
+              <div className="flex flex-col gap-3 select-none">
+                {mockStylists.map((stylist, index) => {
+                  const isSelected = selectedStylist?.id === stylist.id;
+                  
+                  // Generate circular initials
+                  const initials = stylist.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .substring(0, 2)
+                    .toUpperCase();
+
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setSelectedStylist(stylist)}
+                      className={cn(
+                        "flex items-center justify-between p-4.5 rounded-2xl border text-left cursor-pointer transition-all duration-150 active:scale-[0.99] select-none",
+                        isSelected
+                          ? "bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100 shadow-2xs ring-1 ring-gray-900 dark:ring-gray-100"
+                          : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 hover:bg-white dark:hover:bg-gray-850"
+                      )}
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        {/* Custom HSL Avatar initials badge */}
+                        <div className={cn(
+                          "h-11 w-11 rounded-full flex items-center justify-center text-xs font-bold shrink-0 tracking-wider transition-colors select-none",
+                          isSelected
+                            ? "bg-gray-950 text-white dark:bg-white dark:text-gray-900"
+                            : "bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                        )}>
+                          {initials}
+                        </div>
+
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                          <span className="text-xs font-extrabold text-gray-900 dark:text-gray-100 truncate">
+                            {stylist.name}
+                          </span>
+                          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400/90 leading-none mt-0.5">
+                            {stylist.role}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right rating & select check container */}
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-100/40 dark:border-amber-900/30 px-2 py-1 rounded-md">
+                          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 leading-none">
+                            ★ {stylist.rating}
+                          </span>
+                        </div>
+
+                        {isSelected && (
+                          <div className="h-5 w-5 rounded-full bg-gray-900 dark:bg-gray-100 flex items-center justify-center text-white dark:text-gray-900 transition-all select-none">
+                            <Check className="h-3 w-3 stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: DATE SELECTION */}
+          {currentStep === 3 && (
             <div className="flex flex-col gap-6 animate-fade-in-quick">
               <div className="flex flex-col gap-1.5 text-center pt-2">
                 <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-wide leading-none">
@@ -284,8 +363,8 @@ function BookingPageContent() {
             </div>
           )}
 
-          {/* STEP 3: TIME SLOT SELECTION */}
-          {currentStep === 3 && (
+          {/* STEP 4: TIME SLOT SELECTION */}
+          {currentStep === 4 && (
             <div className="flex flex-col gap-6 animate-fade-in-quick">
               <div className="flex flex-col gap-1.5 text-center pt-2">
                 <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-wide leading-none">
@@ -320,8 +399,8 @@ function BookingPageContent() {
             </div>
           )}
 
-          {/* STEP 4: REVIEW SUMMARY & NOTES */}
-          {currentStep === 4 && (
+          {/* STEP 5: REVIEW SUMMARY & NOTES */}
+          {currentStep === 5 && (
             <div className="flex flex-col gap-6 animate-fade-in-quick">
               <div className="flex flex-col gap-1.5 text-center pt-2">
                 <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-wide leading-none">
