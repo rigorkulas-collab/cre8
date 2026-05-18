@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import logo from "@/public/logo.png";
 import Card from "@/components/ui/Card";
 import SectionHeader from "@/components/shared/ui/SectionHeader";
 import FormInput from "@/components/shared/forms/FormInput";
@@ -61,7 +60,7 @@ export default function AdminLoginPage() {
         <div className="flex flex-col items-center gap-2 select-none animate-fade-in">
           <div className="relative w-28 h-28">
             <Image
-              src={logo}
+              src="/cre8/logo.png"
               alt="CRE8 Salon Logo"
               fill
               sizes="112px"
