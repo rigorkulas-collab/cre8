@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import logo from "@/public/logo.png";
 import CustomerLayout from "@/components/layout/customer/CustomerLayout";
 import LoginForm from "@/components/features/customer/auth/LoginForm";
 import AuthFooter from "@/components/features/customer/auth/AuthFooter";
@@ -16,7 +17,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex justify-center pt-2">
           <Image
-            src="/logo.png"
+            src={logo}
             alt="CRE8 Logo"
             width={90}
             height={90}

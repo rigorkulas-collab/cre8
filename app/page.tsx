@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import logo from "@/public/logo.png";
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function SplashScreen() {
       {/* Logo Section */}
       <div className="relative w-40 h-40 transition-transform hover:scale-105 duration-500">
         <Image
-          src="/logo.png"
+          src={logo}
           alt="CRE8 Salon Logo"
           fill
           sizes="(max-width: 768px) 160px, 160px"

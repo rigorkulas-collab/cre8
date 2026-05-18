@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import logo from "@/public/logo.png";
 import CustomerLayout from "@/components/layout/customer/CustomerLayout";
 import RegisterForm from "@/components/features/customer/auth/RegisterForm";
 import AuthFooter from "@/components/features/customer/auth/AuthFooter";
@@ -16,7 +17,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="flex justify-center pt-2">
           <Image
-            src="/logo.png"
+            src={logo}
             alt="CRE8 Logo"
             width={90}
             height={90}
