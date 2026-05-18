@@ -427,6 +427,21 @@ function BookingPageContent() {
                   <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">{activeService.price}</span>
                 </div>
 
+                {/* Stylist */}
+                <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-800 pb-3 transition-colors duration-200">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+                      Stylist Professional
+                    </span>
+                    <span className="text-xs font-extrabold text-gray-900 dark:text-gray-100 mt-0.5">
+                      {selectedStylist ? selectedStylist.name : "Any Stylist"}
+                    </span>
+                  </div>
+                  <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400">
+                    {selectedStylist ? selectedStylist.role : "First Available"}
+                  </span>
+                </div>
+
                 {/* Schedule */}
                 <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-800 pb-3 transition-colors duration-200">
                   <div className="flex flex-col gap-0.5">
@@ -709,6 +724,15 @@ function BookingPageContent() {
               </span>
               <span className="font-bold text-gray-900 dark:text-gray-100">
                 {activeService.name}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center text-xs border-t border-gray-200/50 dark:border-gray-800 pt-2.5 transition-colors duration-200">
+              <span className="font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-[9px]">
+                Stylist Assigned
+              </span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">
+                {selectedStylist ? selectedStylist.name : "Any Stylist (No Preference)"}
               </span>
             </div>
 
