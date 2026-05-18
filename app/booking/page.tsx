@@ -263,7 +263,7 @@ function BookingPageContent() {
                         "flex items-center justify-between p-4.5 rounded-2xl border text-left cursor-pointer transition-all duration-150 active:scale-[0.99] select-none",
                         isSelected
                           ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/60 shadow-2xs"
-                          : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 hover:bg-white dark:hover:bg-gray-800"
+                          : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 hover:bg-white dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-600"
                       )}
                     >
                       <div className="flex items-center gap-4 min-w-0">
@@ -490,7 +490,7 @@ function BookingPageContent() {
                       "flex flex-col items-start gap-1.5 p-4 rounded-2xl border text-left cursor-pointer transition-all duration-150 active:scale-[0.98] select-none",
                       paymentMethod === "salon"
                         ? "bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100 shadow-2xs ring-1 ring-gray-900 dark:ring-gray-100"
-                        : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-800"
+                        : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-700"
                     )}
                   >
                     <Wallet className="h-5 w-5 text-gray-600 dark:text-gray-400 shrink-0" />
@@ -511,7 +511,7 @@ function BookingPageContent() {
                       "flex flex-col items-start gap-1.5 p-4 rounded-2xl border text-left cursor-pointer transition-all duration-150 active:scale-[0.98] select-none",
                       paymentMethod === "online"
                         ? "bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100 shadow-2xs ring-1 ring-gray-900 dark:ring-gray-100"
-                        : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-800"
+                        : "bg-gray-50/50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-800/80 hover:border-gray-300 dark:hover:border-gray-700"
                     )}
                   >
                     <CreditCard className="h-5 w-5 text-gray-600 dark:text-gray-400 shrink-0" />
