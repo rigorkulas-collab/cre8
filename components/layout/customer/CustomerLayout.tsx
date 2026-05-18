@@ -100,7 +100,7 @@ export default function CustomerLayout({
 
         {/* Floating Minimalist Back Button at the Top Left */}
         {showBack && (
-          <div className="absolute top-[44px] left-4 z-50 select-none">
+          <div className="absolute top-[32px] left-4 z-50 select-none">
             <button
               onClick={() => {
                 if (handleBackClick) {
@@ -118,7 +118,7 @@ export default function CustomerLayout({
         )}
 
         {/* Top Left Dark Mode Switcher (placed at left-[60px] next to the back button if present, otherwise left-4) */}
-        <div className={`absolute top-[44px] z-50 select-none transition-all ${showBack ? "left-[60px]" : "left-4"}`}>
+        <div className={`absolute top-[32px] z-50 select-none transition-all ${showBack ? "left-[60px]" : "left-4"}`}>
           <button
             onClick={toggleDark}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-2xs backdrop-blur-xs select-none cursor-pointer focus:outline-none transition-all active:scale-95 duration-150"
@@ -134,7 +134,7 @@ export default function CustomerLayout({
         </div>
 
         {/* Top Right Premium Toolbar (Notification bell dropdown, Avatar) */}
-        <div className="absolute top-[44px] right-4 z-50 flex items-center gap-2 select-none">
+        <div className="absolute top-[32px] right-4 z-50 flex items-center gap-2 select-none">
           {isLoggedIn && (
             <>
               {/* Notification Bell with Badge and Expanding Dropdown */}
