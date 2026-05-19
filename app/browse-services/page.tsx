@@ -359,7 +359,7 @@ export default function BrowseServicesPage() {
               <Button
                 variant="primary"
                 onClick={() => {
-                  let ids = [...selectedServiceIds];
+                  const ids = [...selectedServiceIds];
                   if (!ids.includes(selectedService.id)) {
                     ids.push(selectedService.id);
                   }
