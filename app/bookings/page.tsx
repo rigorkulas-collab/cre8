@@ -33,6 +33,23 @@ export default function BookingsPage() {
     setMounted(true);
     if (typeof window !== "undefined") {
       setUserRole(localStorage.getItem("cre8_user_role") || "member");
+      const stored = localStorage.getItem("cre8_appointments");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            const combined = [...parsed];
+            initialAppointments.forEach(initApt => {
+              if (!combined.some(a => a.id === initApt.id || a.refCode === initApt.refCode)) {
+                combined.push(initApt);
+              }
+            });
+            setAppointments(combined);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
 
@@ -101,13 +118,17 @@ export default function BookingsPage() {
       alert("Please select both a date and time slot.");
       return;
     }
-    setAppointments(prev =>
-      prev.map(apt => 
+    setAppointments(prev => {
+      const next = prev.map(apt => 
         apt.id === selectedAptId 
-          ? { ...apt, date: tempDate, time: tempTime, status: "rescheduled" } 
+          ? { ...apt, date: tempDate, time: tempTime, status: "rescheduled" as const } 
           : apt
-      )
-    );
+      );
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cre8_appointments", JSON.stringify(next));
+      }
+      return next;
+    });
     setIsRescheduleOpen(false);
     setSelectedAptId(null);
     alert("Styling session rescheduled successfully!");
@@ -120,9 +141,13 @@ export default function BookingsPage() {
   };
 
   const handleSaveCancel = () => {
-    setAppointments(prev =>
-      prev.map(apt => apt.id === selectedAptId ? { ...apt, status: "cancelled" } : apt)
-    );
+    setAppointments(prev => {
+      const next = prev.map(apt => apt.id === selectedAptId ? { ...apt, status: "cancelled" as const } : apt);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cre8_appointments", JSON.stringify(next));
+      }
+      return next;
+    });
     setIsCancelOpen(false);
     setSelectedAptId(null);
     alert("Styling session cancelled successfully.");

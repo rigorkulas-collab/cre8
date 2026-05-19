@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import CustomerLayout from "@/components/layout/customer/CustomerLayout";
 import SearchBar from "@/components/shared/ui/SearchBar";
@@ -19,6 +20,30 @@ export default function BrowseServicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleServiceSelection = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedServiceIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const totalPrice = useMemo(() => {
+    return selectedServiceIds.reduce((sum, id) => {
+      const service = mockServices.find((s) => s.id === id);
+      if (service) {
+        const val = parseInt(service.price.replace(/[^0-9]/g, ""), 10) || 0;
+        return sum + val;
+      }
+      return sum;
+    }, 0);
+  }, [selectedServiceIds]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -172,41 +197,50 @@ export default function BrowseServicesPage() {
                 onScroll={handleScroll}
                 className="flex gap-4 overflow-x-auto scrollbar-none pb-1 select-none"
               >
-                 {featuredServices.map((service) => (
-                  <div
-                    key={service.id}
-                    onClick={() => setSelectedService(service)}
-                     className="flex-shrink-0 w-[220px] bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 border border-amber-500/20 hover:border-amber-500/40 hover:shadow-[0_4px_20px_rgba(245,158,11,0.08)] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer select-none active:scale-[0.98] transition-all duration-150 shadow-md"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <span 
-                        className="text-[10px] font-extrabold px-2 py-1 bg-amber-500/10 text-amber-400 rounded-md leading-none select-none uppercase tracking-wider"
-                        style={{ border: '1px solid rgba(255, 255, 255, 0.12)' }}
-                      >
-                        Featured
-                      </span>
-                      <span className="text-sm font-extrabold text-emerald-400">
-                        {service.price}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <h4 className="text-sm font-extrabold text-white truncate">
-                        {service.name}
-                      </h4>
-                      <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-400 dark:text-gray-500">
-                        <div className="flex items-center gap-0.5">
-                          <Clock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
-                          <span>{service.duration}</span>
-                        </div>
-                        <span>•</span>
-                        <span className="text-yellow-500 font-extrabold">★ {service.rating}</span>
+                 {featuredServices.map((service) => {
+                  const isSelected = selectedServiceIds.includes(service.id);
+                  return (
+                    <div
+                      key={service.id}
+                      onClick={() => setSelectedService(service)}
+                      className="flex-shrink-0 w-[220px] bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 border border-amber-500/20 hover:border-amber-500/40 hover:shadow-[0_4px_20px_rgba(245,158,11,0.08)] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer select-none active:scale-[0.98] transition-all duration-150 shadow-md"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => toggleServiceSelection(service.id, e)}
+                          className={cn(
+                            "text-[10px] font-extrabold px-2.5 py-1.5 rounded-md leading-none select-none uppercase tracking-wider transition-colors border cursor-pointer",
+                            isSelected
+                              ? "bg-emerald-500 text-white border-emerald-500"
+                              : "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
+                          )}
+                        >
+                          {isSelected ? "Selected ✓" : "Select"}
+                        </button>
+                        <span className="text-sm font-extrabold text-emerald-400">
+                          {service.price}
+                        </span>
                       </div>
+                      <div className="flex flex-col gap-1">
+                        <h4 className="text-sm font-extrabold text-white truncate">
+                          {service.name}
+                        </h4>
+                        <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+                          <div className="flex items-center gap-0.5">
+                            <Clock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
+                            <span>{service.duration}</span>
+                          </div>
+                          <span>•</span>
+                          <span className="text-yellow-500 font-extrabold">★ {service.rating}</span>
+                        </div>
+                      </div>
+                      <p className="text-xs font-medium text-gray-300 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                        {service.description}
+                      </p>
                     </div>
-                    <p className="text-xs font-medium text-gray-300 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                      {service.description}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Sleek Minimalist Scroll Indicator Track */}
@@ -232,33 +266,49 @@ export default function BrowseServicesPage() {
                   {category}
                 </h3>
                 <div className="flex flex-col">
-                  {items.map((service) => (
-                    <div
-                      key={service.id}
-                      onClick={() => setSelectedService(service)}
-                      className="group flex items-center justify-between gap-4 p-4 mb-2 bg-white dark:bg-gray-800/40 hover:bg-gray-50/60 dark:hover:bg-gray-800/60 border border-gray-100 dark:border-gray-800/60 hover:border-gray-200 dark:hover:border-gray-700 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.99] shadow-2xs select-none"
-                    >
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-extrabold text-gray-900 dark:text-gray-100 group-hover:underline truncate">
-                            {service.name}
-                          </h4>
-                          <span className="text-[10.5px] font-bold text-gray-600 dark:text-gray-400 shrink-0">
-                            ({service.duration})
-                          </span>
+                  {items.map((service) => {
+                    const isSelected = selectedServiceIds.includes(service.id);
+                    return (
+                      <div
+                        key={service.id}
+                        onClick={() => setSelectedService(service)}
+                        className="group flex items-center justify-between gap-4 p-4 mb-2 bg-white dark:bg-gray-800/40 hover:bg-gray-50/60 dark:hover:bg-gray-800/60 border border-gray-150 dark:border-gray-800/60 hover:border-gray-200 dark:hover:border-gray-700 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.99] shadow-2xs select-none"
+                      >
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-extrabold text-gray-900 dark:text-gray-100 group-hover:underline truncate">
+                              {service.name}
+                            </h4>
+                            <span className="text-[10.5px] font-bold text-gray-600 dark:text-gray-400 shrink-0">
+                              ({service.duration})
+                            </span>
+                          </div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 line-clamp-1 leading-normal">
+                            {service.description}
+                          </p>
                         </div>
-                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 line-clamp-1 leading-normal">
-                          {service.description}
-                        </p>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                            {service.price}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => toggleServiceSelection(service.id, e)}
+                            className={cn(
+                              "h-6 w-6 rounded-full flex items-center justify-center border transition-all cursor-pointer",
+                              isSelected
+                                ? "bg-emerald-500 border-emerald-500 text-white"
+                                : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600"
+                            )}
+                          >
+                            {isSelected && (
+                              <span className="text-[10px] font-bold">✓</span>
+                            )}
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                          {service.price}
-                        </span>
-                        <ChevronRight className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors" />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -288,16 +338,39 @@ export default function BrowseServicesPage() {
         size="sm"
         footer={
           selectedService && (
-            <Button
-              variant="primary"
-               onClick={() => {
-                 setSelectedService(null);
-                 router.push(`/booking?serviceId=${selectedService.id}`);
-               }}
-              className="w-full rounded-2xl py-4 text-sm font-bold"
-            >
-              Book Now • {selectedService.price}
-            </Button>
+            <div className="flex flex-col gap-2 w-full select-none">
+              <button
+                type="button"
+                onClick={() => {
+                  toggleServiceSelection(selectedService.id);
+                }}
+                className={cn(
+                  "w-full rounded-2xl py-3.5 text-xs font-extrabold border transition-all cursor-pointer",
+                  selectedServiceIds.includes(selectedService.id)
+                    ? "bg-red-50 dark:bg-red-950/20 text-red-600 border-red-200 dark:border-red-900/40 hover:bg-red-100/50"
+                    : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/80"
+                )}
+              >
+                {selectedServiceIds.includes(selectedService.id)
+                  ? "Remove from Booking Selection"
+                  : "Add to Booking Selection"}
+              </button>
+              
+              <Button
+                variant="primary"
+                onClick={() => {
+                  let ids = [...selectedServiceIds];
+                  if (!ids.includes(selectedService.id)) {
+                    ids.push(selectedService.id);
+                  }
+                  setSelectedService(null);
+                  router.push(`/booking?serviceIds=${ids.join(",")}`);
+                }}
+                className="w-full rounded-2xl py-3.5 text-xs font-bold"
+              >
+                Book Now {selectedServiceIds.includes(selectedService.id) ? "Selection" : ""} • {selectedService.price}
+              </Button>
+            </div>
           )
         }
       >
@@ -333,6 +406,39 @@ export default function BrowseServicesPage() {
           </div>
         )}
       </Drawer>
+
+      {/* Floating Sticky Selection Bar */}
+      {mounted && selectedServiceIds.length > 0 && typeof document !== "undefined" && document.getElementById("customer-modal-portal")
+        ? createPortal(
+            <div className="absolute bottom-[92px] left-4 right-4 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-gray-150 dark:border-gray-800/85 rounded-2xl p-4 shadow-lg flex items-center justify-between pointer-events-auto animate-page-in transition-all duration-200">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">
+                  {selectedServiceIds.length} Treatment{selectedServiceIds.length > 1 ? "s" : ""} Selected
+                </span>
+                <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 leading-none">
+                  ₱{totalPrice.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedServiceIds([])}
+                  className="text-[11px] font-extrabold text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 cursor-pointer"
+                >
+                  Clear All
+                </button>
+                <Button
+                  variant="primary"
+                  onClick={() => router.push(`/booking?serviceIds=${selectedServiceIds.join(",")}`)}
+                  className="rounded-xl px-5 py-2.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  Book Selection
+                </Button>
+              </div>
+            </div>,
+            document.getElementById("customer-modal-portal")!
+          )
+        : null}
     </CustomerLayout>
   );
 }

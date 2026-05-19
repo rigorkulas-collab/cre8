@@ -87,10 +87,41 @@ function BookingPageContent() {
 
   const days = useMemo(() => generateDays(), []);
 
-  // Pre-fill active service item
-  const activeService = useMemo(() => {
-    return mockServices.find(s => s.id === serviceId) || mockServices[0];
-  }, [serviceId]);
+  const serviceIdsParam = searchParams.get("serviceIds");
+
+  const serviceIds = useMemo(() => {
+    if (serviceIdsParam) {
+      return serviceIdsParam.split(",");
+    }
+    if (serviceId) {
+      return serviceId.split(",");
+    }
+    return [];
+  }, [serviceIdsParam, serviceId]);
+
+  const activeServices = useMemo(() => {
+    const found = mockServices.filter(s => serviceIds.includes(s.id));
+    return found.length > 0 ? found : [mockServices[0]];
+  }, [serviceIds]);
+
+  const totalPricing = useMemo(() => {
+    let priceSum = 0;
+    let durationSum = 0;
+
+    activeServices.forEach(s => {
+      const pVal = parseInt(s.price.replace(/[^0-9]/g, ""), 10) || 0;
+      const dVal = parseInt(s.duration.replace(/[^0-9]/g, ""), 10) || 0;
+      priceSum += pVal;
+      durationSum += dVal;
+    });
+
+    return {
+      priceRaw: priceSum,
+      priceStr: `₱${priceSum.toLocaleString()}`,
+      durationRaw: durationSum,
+      durationStr: `${durationSum} Min`
+    };
+  }, [activeServices]);
 
   // Set default day selection
   useEffect(() => {
@@ -145,9 +176,30 @@ function BookingPageContent() {
     }
     
     setPaymentErrors({});
-    // Generate simple premium transaction ref code
     const randCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    setBookingRef(`CRE8-${randCode}`);
+    const generatedRef = `CRE8-${randCode}`;
+    setBookingRef(generatedRef);
+
+    if (typeof window !== "undefined") {
+      const newApt = {
+        id: `APT-${Math.floor(100 + Math.random() * 900)}`,
+        serviceId: activeServices.map(s => s.id).join(","),
+        serviceName: activeServices.map(s => s.name).join(" + "),
+        category: activeServices[0].category,
+        stylistName: selectedStylist ? selectedStylist.name : "First Available",
+        date: selectedDay?.fullStr || "May 20, 2026",
+        time: selectedTimeSlot || "09:00 AM",
+        price: totalPricing.priceStr,
+        duration: totalPricing.durationStr,
+        status: "confirmed",
+        refCode: generatedRef
+      };
+      
+      const stored = localStorage.getItem("cre8_appointments");
+      const currentList = stored ? JSON.parse(stored) : [];
+      localStorage.setItem("cre8_appointments", JSON.stringify([newApt, ...currentList]));
+    }
+
     setIsConfirming(true);
   };
 
@@ -186,38 +238,62 @@ function BookingPageContent() {
             <div className="flex flex-col gap-6 animate-fade-in-quick">
               <div className="flex flex-col gap-1.5 text-center pt-2">
                 <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-wide leading-none">
-                  Review Selected Service
+                  {activeServices.length > 1 ? "Review Selected Services" : "Review Selected Service"}
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
-                  Ensure this is the desired styling treatment before picking your stylist
+                  Ensure {activeServices.length > 1 ? "these are the desired styling treatments" : "this is the desired styling treatment"} before picking your stylist
                 </p>
               </div>
 
-              {/* Service Details Card */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 flex flex-col gap-5 shadow-xs transition-colors duration-200">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-[9px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-widest">
-                      {activeService.category} Treatment
-                    </span>
-                    <h3 className="text-sm font-extrabold text-gray-900 dark:text-gray-100 truncate">
-                      {activeService.name}
-                    </h3>
+              {/* Service Details Cards Stack */}
+              <div className="flex flex-col gap-4">
+                {activeServices.map((service, idx) => (
+                  <div key={service.id || idx} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-5 flex flex-col gap-4 shadow-xs transition-colors duration-200">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-[9px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+                          {service.category} Treatment
+                        </span>
+                        <h3 className="text-sm font-extrabold text-gray-950 dark:text-gray-100 truncate">
+                          {service.name}
+                        </h3>
+                      </div>
+                      <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0">
+                        {service.price}
+                      </span>
+                    </div>
+                    
+                    <p className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg p-3 transition-colors duration-200">
+                      {service.description}
+                    </p>
+
+                    <div className="flex items-center gap-2 text-[10px] font-extrabold text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                      <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400 shrink-0" />
+                      <span>Duration: {service.duration}</span>
+                    </div>
                   </div>
-                  <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0">
-                    {activeService.price}
-                  </span>
-                </div>
-                
-                <p className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg p-3 transition-colors duration-200">
-                  {activeService.description}
-                </p>
-
-                <div className="flex items-center gap-2 text-[10px] font-extrabold text-gray-600 dark:text-gray-400 transition-colors duration-200">
-                  <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400 shrink-0" />
-                  <span>Duration: {activeService.duration}</span>
-                </div>
+                ))}
               </div>
+
+              {/* Combined Total Summary Card for Multi-service selection */}
+              {activeServices.length > 1 && (
+                <div className="bg-gray-50 dark:bg-gray-800/40 border border-gray-200/60 dark:border-gray-700/50 rounded-2xl p-5 flex flex-col gap-3 transition-colors duration-200">
+                  <span className="text-[9px] font-extrabold text-gray-500 uppercase tracking-wider">Selection Summary</span>
+                  <div className="flex justify-between items-center text-xs font-bold text-gray-700 dark:text-gray-300">
+                    <span>Total Treatments:</span>
+                    <span>{activeServices.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-bold text-gray-700 dark:text-gray-300">
+                    <span>Combined Duration:</span>
+                    <span>{totalPricing.durationStr}</span>
+                  </div>
+                  <div className="h-px bg-gray-200 dark:bg-gray-700" />
+                  <div className="flex justify-between items-center text-sm font-extrabold text-gray-900 dark:text-gray-100">
+                    <span>Total Price:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{totalPricing.priceStr}</span>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() => router.push("/browse-services")}
@@ -414,17 +490,23 @@ function BookingPageContent() {
               {/* Visual specification cards */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 flex flex-col gap-5 shadow-xs transition-colors duration-200">
                 
-                {/* Service */}
-                <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-800 pb-3 transition-colors duration-200">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[9px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-widest">
-                      Treatment
-                    </span>
-                    <span className="text-xs font-extrabold text-gray-900 dark:text-gray-100 mt-0.5">
-                      {activeService.name}
-                    </span>
-                  </div>
-                  <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">{activeService.price}</span>
+                {/* Services */}
+                <div className="flex flex-col gap-2.5 border-b border-gray-100 dark:border-gray-800 pb-3 transition-colors duration-200">
+                  <span className="text-[9px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+                    Selected Treatments
+                  </span>
+                  {activeServices.map((service, idx) => (
+                    <div key={service.id || idx} className="flex justify-between items-center text-xs font-semibold text-gray-950 dark:text-gray-100">
+                      <span className="font-bold">{service.name}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{service.price}</span>
+                    </div>
+                  ))}
+                  {activeServices.length > 1 && (
+                    <div className="flex justify-between items-center text-xs font-extrabold border-t border-gray-100 dark:border-gray-700/50 pt-2 text-gray-900 dark:text-white mt-1">
+                      <span>Total Price:</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">{totalPricing.priceStr}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Stylist */}
@@ -460,7 +542,7 @@ function BookingPageContent() {
                   <span className="font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-widest text-[9px]">
                     Expected Duration
                   </span>
-                  <span className="font-extrabold text-gray-900 dark:text-gray-100">{activeService.duration}</span>
+                  <span className="font-extrabold text-gray-900 dark:text-gray-100">{totalPricing.durationStr}</span>
                 </div>
 
               </div>
@@ -719,11 +801,11 @@ function BookingPageContent() {
             </div>
             
             <div className="flex justify-between items-center text-xs border-t border-gray-200/50 dark:border-gray-800 pt-2.5 transition-colors duration-200">
-              <span className="font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-[9px]">
+              <span className="font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-[9px] shrink-0">
                 Service Treatment
               </span>
-              <span className="font-bold text-gray-900 dark:text-gray-100">
-                {activeService.name}
+              <span className="font-bold text-gray-900 dark:text-gray-100 text-right truncate max-w-[200px]" title={activeServices.map(s => s.name).join(", ")}>
+                {activeServices.map(s => s.name).join(" + ")}
               </span>
             </div>
 

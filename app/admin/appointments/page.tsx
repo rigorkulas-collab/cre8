@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import SectionHeader from "@/components/shared/ui/SectionHeader";
 import StatsCard from "@/components/shared/StatsCard";
@@ -114,6 +114,39 @@ export default function AdminAppointmentsPage() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "calendar">("table");
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cre8_appointments");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            const mapped: Appointment[] = parsed.map(apt => ({
+              id: apt.id,
+              customerName: apt.customerName || "Zachary Cruz",
+              serviceName: apt.serviceName,
+              staffName: apt.stylistName || "Elena Rostova",
+              time: apt.time,
+              status: apt.status,
+              price: apt.price,
+              notes: apt.notes || ""
+            }));
+
+            const combined = [...mapped];
+            initialAppointments.forEach(initApt => {
+              if (!combined.some(a => a.id === initApt.id)) {
+                combined.push(initApt);
+              }
+            });
+            setAppointments(combined);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
   // New Appointment Form States
   const [isNewDrawerOpen, setIsNewDrawerOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState("");
@@ -148,7 +181,30 @@ export default function AdminAppointmentsPage() {
       notes: newNotes,
     };
 
-    setAppointments(prev => [newApt, ...prev]);
+    setAppointments(prev => {
+      const next = [newApt, ...prev];
+      if (typeof window !== "undefined") {
+        const customerApt = {
+          id: newApt.id,
+          serviceId: "SRV-001",
+          serviceName: newApt.serviceName,
+          category: "Hair",
+          stylistName: newApt.staffName,
+          date: "May 20, 2026",
+          time: newApt.time,
+          price: newApt.price,
+          duration: "45 Min",
+          status: newApt.status,
+          refCode: `CRE8-${newApt.id.substring(4)}`,
+          notes: newApt.notes,
+          customerName: newApt.customerName
+        };
+        const stored = localStorage.getItem("cre8_appointments");
+        const currentList = stored ? JSON.parse(stored) : [];
+        localStorage.setItem("cre8_appointments", JSON.stringify([customerApt, ...currentList]));
+      }
+      return next;
+    });
     
     // reset form states
     setNewCustomer("");
@@ -161,19 +217,40 @@ export default function AdminAppointmentsPage() {
 
   // Status Action Handlers
   const handleApprove = (id: string) => {
-    setAppointments(prev => prev.map(apt => 
-      apt.id === id ? { ...apt, status: "confirmed" } : apt
-    ));
-    // If the currently open drawer is the approved item, update its state too
+    setAppointments(prev => {
+      const next = prev.map(apt => 
+        apt.id === id ? { ...apt, status: "confirmed" } : apt
+      );
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("cre8_appointments");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const updated = parsed.map((a: any) => a.id === id ? { ...a, status: "confirmed" } : a);
+          localStorage.setItem("cre8_appointments", JSON.stringify(updated));
+        }
+      }
+      return next;
+    });
     if (selectedAppointment?.id === id) {
       setSelectedAppointment(prev => prev ? { ...prev, status: "confirmed" } : null);
     }
   };
 
   const handleCancel = (id: string) => {
-    setAppointments(prev => prev.map(apt => 
-      apt.id === id ? { ...apt, status: "cancelled" } : apt
-    ));
+    setAppointments(prev => {
+      const next = prev.map(apt => 
+        apt.id === id ? { ...apt, status: "cancelled" } : apt
+      );
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("cre8_appointments");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const updated = parsed.map((a: any) => a.id === id ? { ...a, status: "cancelled" } : a);
+          localStorage.setItem("cre8_appointments", JSON.stringify(updated));
+        }
+      }
+      return next;
+    });
     // If the currently open drawer is the cancelled item, update its state too
     if (selectedAppointment?.id === id) {
       setSelectedAppointment(prev => prev ? { ...prev, status: "cancelled" } : null);
@@ -181,10 +258,20 @@ export default function AdminAppointmentsPage() {
   };
 
   const handleComplete = (id: string) => {
-    setAppointments(prev => prev.map(apt => 
-      apt.id === id ? { ...apt, status: "completed" } : apt
-    ));
-    // If the currently open drawer is the completed item, update its state too
+    setAppointments(prev => {
+      const next = prev.map(apt => 
+        apt.id === id ? { ...apt, status: "completed" } : apt
+      );
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("cre8_appointments");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const updated = parsed.map((a: any) => a.id === id ? { ...a, status: "completed" } : a);
+          localStorage.setItem("cre8_appointments", JSON.stringify(updated));
+        }
+      }
+      return next;
+    });
     if (selectedAppointment?.id === id) {
       setSelectedAppointment(prev => prev ? { ...prev, status: "completed" } : null);
     }
