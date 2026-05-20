@@ -28,11 +28,16 @@ export default function BookingsPage() {
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [userRole, setUserRole] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
 
   React.useEffect(() => {
     setMounted(true);
     if (typeof window !== "undefined") {
       setUserRole(localStorage.getItem("cre8_user_role") || "member");
+      const storedReviews = localStorage.getItem("cre8_reviews");
+      if (storedReviews) {
+        setReviews(JSON.parse(storedReviews));
+      }
       const stored = localStorage.getItem("cre8_appointments");
       if (stored) {
         try {
@@ -161,6 +166,50 @@ export default function BookingsPage() {
   };
 
   const handleSaveReview = () => {
+    if (!reviewAptId) return;
+    const apt = appointments.find(a => a.id === reviewAptId);
+    if (!apt) return;
+
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cre8_reviews");
+      const existingReviews = stored ? JSON.parse(stored) : [];
+
+      const newReview = {
+        id: `REV-${Math.floor(1000 + Math.random() * 9000)}`,
+        appointmentId: reviewAptId,
+        serviceId: "", // can be empty or looked up
+        serviceName: apt.serviceName,
+        stylistName: apt.stylistName || "Alex Rivera",
+        customerName: "Zachary",
+        rating,
+        comment: comment.trim(),
+        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        approved: true
+      };
+
+      const updatedReviews = [newReview, ...existingReviews];
+      localStorage.setItem("cre8_reviews", JSON.stringify(updatedReviews));
+      setReviews(updatedReviews);
+
+      // Recalculate and update stylist rating
+      const storedStylists = localStorage.getItem("cre8_stylists");
+      if (storedStylists) {
+        const stylists = JSON.parse(storedStylists);
+        const updatedStylists = stylists.map((stylist: any) => {
+          if (stylist.name.toLowerCase().trim() === (apt.stylistName || "").toLowerCase().trim()) {
+            const stylistReviews = updatedReviews.filter(
+              (r: any) => r.stylistName.toLowerCase().trim() === stylist.name.toLowerCase().trim()
+            );
+            const totalStars = stylistReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
+            const avgRating = stylistReviews.length > 0 ? (totalStars / stylistReviews.length).toFixed(1) : "5.0";
+            return { ...stylist, rating: avgRating };
+          }
+          return stylist;
+        });
+        localStorage.setItem("cre8_stylists", JSON.stringify(updatedStylists));
+      }
+    }
+
     alert("Thank you for your rating! Your review helps us curate premium salon treatments.");
     setReviewAptId(null);
   };

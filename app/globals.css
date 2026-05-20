@@ -10,6 +10,7 @@
   --muted-foreground: #6b7280;
   --accent: #111827;
   --border: #e5e7eb;
+  --gray-850: #262626;
 }
 
 .dark {
@@ -19,6 +20,7 @@
   --muted-foreground: #737373;
   --accent: #ededed;
   --border: #1f1f1f;
+  --gray-850: #161616;
 
   /* Override Tailwind gray scale → true neutral blacks (Cursor.com palette) */
   --color-gray-950: #080808;
@@ -41,6 +43,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-border: var(--border);
+  --color-gray-850: var(--gray-850);
   
   --animate-fade-in: fadeIn 1s ease-in-out forwards;
   --animate-slide-in-right: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;

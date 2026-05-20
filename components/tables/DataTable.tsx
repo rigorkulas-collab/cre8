@@ -37,10 +37,9 @@ export default function DataTable<T>({
                   key={idx}
                   scope="col"
                   className={cn(
-                    "px-3 py-3 font-semibold",
+                    "px-3 py-3 font-semibold text-gray-400 dark:text-gray-500",
                     col.align === "center" && "text-center",
                     col.align === "right" && "text-right",
-                    col.className
                   )}
                 >
                   {col.header}

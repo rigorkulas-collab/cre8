@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import SectionHeader from "@/components/shared/ui/SectionHeader";
 import StatsCard from "@/components/shared/StatsCard";
@@ -15,7 +15,12 @@ import {
   Layers, 
   Plus, 
   Trash2, 
-  AlertTriangle 
+  AlertTriangle,
+  Star,
+  Eye,
+  EyeOff,
+  Check,
+  X
 } from "lucide-react";
 
 interface Service {
@@ -43,6 +48,94 @@ export default function AdminServicesPage() {
   const [services, setServices] = useState<Service[]>(initialServices);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [activeTab, setActiveTab] = useState<"services" | "reviews">("services");
+  const [reviews, setReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedSrvs = localStorage.getItem("cre8_services");
+      if (storedSrvs) {
+        setServices(JSON.parse(storedSrvs));
+      } else {
+        localStorage.setItem("cre8_services", JSON.stringify(initialServices));
+      }
+
+      const storedReviews = localStorage.getItem("cre8_reviews");
+      if (storedReviews) {
+        setReviews(JSON.parse(storedReviews));
+      } else {
+        const defaultReviews = [
+          {
+            id: "REV-001",
+            appointmentId: "APT-003",
+            serviceId: "SRV-004",
+            serviceName: "Keratin Rebond",
+            stylistName: "Elena Rostova",
+            customerName: "Emma Watson",
+            rating: 5,
+            comment: "Absolutely gorgeous results! Elena is an artist, my hair is so shiny and smooth.",
+            date: "May 18, 2026",
+            approved: true
+          },
+          {
+            id: "REV-002",
+            appointmentId: "APT-001",
+            serviceId: "SRV-002",
+            serviceName: "Hair Color",
+            stylistName: "Elena Rostova",
+            customerName: "Sophia Martinez",
+            rating: 4,
+            comment: "Loved the organic hair dye. Very bright color and scalp felt clean.",
+            date: "May 17, 2026",
+            approved: true
+          }
+        ];
+        localStorage.setItem("cre8_reviews", JSON.stringify(defaultReviews));
+        setReviews(defaultReviews);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && services !== initialServices) {
+      localStorage.setItem("cre8_services", JSON.stringify(services));
+    }
+  }, [services]);
+
+  const handleToggleReviewApproval = (reviewId: string) => {
+    setReviews(prev => {
+      const next = prev.map(r => r.id === reviewId ? { ...r, approved: !r.approved } : r);
+      localStorage.setItem("cre8_reviews", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    if (confirm("Are you sure you want to delete this customer feedback review permanently?")) {
+      setReviews(prev => {
+        const next = prev.filter(r => r.id !== reviewId);
+        localStorage.setItem("cre8_reviews", JSON.stringify(next));
+        return next;
+      });
+    }
+  };
+
+  // Group reviews by stylist to calculate performance metrics
+  const stylistRatings = useMemo(() => {
+    const map: Record<string, { totalStars: number; count: number; name: string }> = {};
+    reviews.forEach(r => {
+      if (!map[r.stylistName]) {
+        map[r.stylistName] = { totalStars: 0, count: 0, name: r.stylistName };
+      }
+      map[r.stylistName].totalStars += r.rating;
+      map[r.stylistName].count += 1;
+    });
+    return Object.values(map).map(item => ({
+      name: item.name,
+      avg: (item.totalStars / item.count).toFixed(1),
+      count: item.count
+    }));
+  }, [reviews]);
   
   // Drawer States
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -287,43 +380,185 @@ export default function AdminServicesPage() {
           />
         </div>
 
-        {/* Unified Table Section Container */}
-        <div className="flex flex-col gap-5 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.015)] dark:shadow-none">
-          {/* Action Toolbar */}
-          <TableToolbar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search services, categories, descriptions..."
-            filters={
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-gray-400/20 focus:border-gray-900 dark:focus:border-gray-500 transition-all cursor-pointer shadow-sm pr-8"
-              >
-                {categories.map((cat, idx) => (
-                  <option key={idx} value={cat}>
-                    {cat === "All" ? "All Categories" : cat}
-                  </option>
-                ))}
-              </select>
-            }
-            actions={
-              <span className="text-xs font-semibold text-gray-400 select-none">
-                Showing {filteredServices.length} of {services.length}
-              </span>
-            }
-          />
-
-          {/* Catalog Data Grid */}
-          <div className="overflow-hidden">
-            <DataTable
-              columns={columns}
-              data={filteredServices}
-              isLoading={false}
-              onRowClick={openDetailsDrawer}
-            />
-          </div>
+        {/* Navigation Tabs */}
+        <div className="flex gap-6 select-none">
+          <button
+            onClick={() => setActiveTab("services")}
+            className={`pb-3 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === "services"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+            }`}
+          >
+            Treatment Services
+          </button>
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`pb-3 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === "reviews"
+                ? "text-gray-900 dark:text-gray-100"
+                : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+            }`}
+          >
+            Customer Reviews & Feedback
+          </button>
         </div>
+
+        {activeTab === "services" ? (
+          /* Unified Table Section Container */
+          <div className="flex flex-col gap-5 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.015)] dark:shadow-none animate-fade-in-quick">
+            {/* Action Toolbar */}
+            <TableToolbar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search services, categories, descriptions..."
+              filters={
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-gray-400/20 focus:border-gray-900 dark:focus:border-gray-500 transition-all cursor-pointer shadow-sm pr-8"
+                >
+                  {categories.map((cat, idx) => (
+                    <option key={idx} value={cat}>
+                      {cat === "All" ? "All Categories" : cat}
+                    </option>
+                  ))}
+                </select>
+              }
+              actions={
+                <span className="text-xs font-semibold text-gray-400 select-none">
+                  Showing {filteredServices.length} of {services.length}
+                </span>
+              }
+            />
+
+            {/* Catalog Data Grid */}
+            <div className="overflow-hidden">
+              <DataTable
+                columns={columns}
+                data={filteredServices}
+                isLoading={false}
+                onRowClick={openDetailsDrawer}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6 animate-fade-in-quick">
+            {/* Stylists Aggregate Rating Section */}
+            <div className="flex flex-col gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500">
+                Stylist Performance Summary
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {stylistRatings.length > 0 ? (
+                  stylistRatings.map((rating, idx) => (
+                    <div key={idx} className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-xl p-4.5 flex items-center gap-3 shadow-3xs transition-all hover:scale-[1.01]">
+                      <div className="h-9 w-9 rounded-full bg-gray-50 dark:bg-gray-850 flex items-center justify-center font-bold text-xs text-gray-705 dark:text-gray-350 border border-gray-100 dark:border-gray-800 shrink-0">
+                        {rating.name.split(" ").map(n => n[0]).join("")}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">{rating.name}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5 select-none">
+                          <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+                          <span className="text-[10px] font-extrabold text-gray-805 dark:text-gray-300">{rating.avg}</span>
+                          <span className="text-[9px] font-semibold text-gray-400">({rating.count} reviews)</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-8 text-center border border-dashed border-gray-200 dark:border-gray-850 rounded-xl">
+                    <span className="text-xs text-gray-400 font-semibold">No performance data yet. Reviews will generate ratings automatically.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Customer Feedback Feed List */}
+            <div className="flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-150 dark:border-gray-800 p-6 shadow-3xs">
+              <div className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-gray-800 mb-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Reviews Catalog ({reviews.length})
+                </h3>
+                <span className="text-[10px] text-gray-400 font-semibold select-none">
+                  Approve or Hide comments to control visibility on the services catalog menu.
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {reviews.length > 0 ? (
+                  reviews.map((review, idx) => (
+                    <div key={idx} className="border-b border-gray-100 dark:border-gray-800 last:border-0 pb-4 last:pb-0 flex flex-col md:flex-row justify-between gap-4">
+                      <div className="flex flex-col gap-1.5 max-w-2xl">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{review.customerName}</span>
+                          <span className="text-[9px] font-semibold text-gray-400">{review.date}</span>
+                          <div className="flex gap-0.5 ml-1 select-none">
+                            {Array.from({ length: 5 }).map((_, sIdx) => (
+                              <Star
+                                key={sIdx}
+                                className={`h-3 w-3 ${
+                                  sIdx < review.rating ? "text-amber-500 fill-amber-500" : "text-gray-200 dark:text-gray-800"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                          <span>Treatment: <strong className="text-gray-700 dark:text-gray-300">{review.serviceName}</strong></span>
+                          <span>•</span>
+                          <span>Specialist: <strong className="text-gray-700 dark:text-gray-300">{review.stylistName}</strong></span>
+                        </div>
+
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50/50 dark:bg-gray-850 p-3 rounded-lg border border-gray-100/50 dark:border-gray-800/40">
+                          {review.comment || "No comment provided."}
+                        </p>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 shrink-0 self-end md:self-center select-none">
+                        <button
+                          onClick={() => handleToggleReviewApproval(review.id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg border cursor-pointer transition-colors ${
+                            review.approved
+                              ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-250 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100/60"
+                              : "bg-amber-50 dark:bg-amber-950/20 border-amber-250 text-amber-600 dark:text-amber-400 hover:bg-amber-100/60"
+                          }`}
+                        >
+                          {review.approved ? (
+                            <>
+                              <Eye className="h-3 w-3 shrink-0" />
+                              <span>Publicly Visible</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="h-3 w-3 shrink-0" />
+                              <span>Hidden from Menu</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteReview(review.id)}
+                          className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 border border-gray-200 dark:border-gray-805 hover:border-red-200 dark:hover:border-red-900 bg-white dark:bg-gray-900 rounded-lg cursor-pointer transition-colors"
+                          title="Delete Review"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <Star className="h-8 w-8 text-gray-200 dark:text-gray-700 shrink-0 mb-3" />
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-450">No customer reviews submitted yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Details Side-Sheet Drawer */}

@@ -216,6 +216,38 @@ export default function AdminAppointmentsPage() {
   };
 
   // Status Action Handlers
+  const sendNotification = (id: string, type: "confirmed" | "cancelled" | "completed" | "message", customMessage?: string) => {
+    if (typeof window === "undefined") return;
+    const apt = appointments.find(a => a.id === id);
+    if (!apt) return;
+
+    const stored = localStorage.getItem("cre8_notifications");
+    const notifications = stored ? JSON.parse(stored) : [];
+    const dateStr = (apt as any).date || "Today";
+
+    let content = "";
+    if (type === "confirmed") {
+      content = `Your booking for ${apt.serviceName} with ${apt.staffName} on ${dateStr} at ${apt.time} has been CONFIRMED by our admin.`;
+    } else if (type === "cancelled") {
+      content = `Your booking for ${apt.serviceName} with ${apt.staffName} on ${dateStr} at ${apt.time} has been CANCELLED.`;
+    } else if (type === "completed") {
+      content = `Thank you for visiting! Your session for ${apt.serviceName} with ${apt.staffName} is complete. Please leave a review!`;
+    } else if (type === "message") {
+      content = customMessage || `Admin update regarding your booking for ${apt.serviceName}.`;
+    }
+
+    const newNotification = {
+      id: `NTF-${Math.floor(1000 + Math.random() * 9000)}`,
+      appointmentId: id,
+      title: type === "message" ? "Message from Salon Admin" : `Booking ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      content,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+      read: false
+    };
+
+    localStorage.setItem("cre8_notifications", JSON.stringify([newNotification, ...notifications]));
+  };
+
   const handleApprove = (id: string) => {
     setAppointments(prev => {
       const next = prev.map(apt => 
@@ -234,6 +266,7 @@ export default function AdminAppointmentsPage() {
     if (selectedAppointment?.id === id) {
       setSelectedAppointment(prev => prev ? { ...prev, status: "confirmed" } : null);
     }
+    sendNotification(id, "confirmed");
   };
 
   const handleCancel = (id: string) => {
@@ -251,10 +284,10 @@ export default function AdminAppointmentsPage() {
       }
       return next;
     });
-    // If the currently open drawer is the cancelled item, update its state too
     if (selectedAppointment?.id === id) {
       setSelectedAppointment(prev => prev ? { ...prev, status: "cancelled" } : null);
     }
+    sendNotification(id, "cancelled");
   };
 
   const handleComplete = (id: string) => {
@@ -275,6 +308,11 @@ export default function AdminAppointmentsPage() {
     if (selectedAppointment?.id === id) {
       setSelectedAppointment(prev => prev ? { ...prev, status: "completed" } : null);
     }
+    sendNotification(id, "completed");
+  };
+
+  const handleSendCustomAlert = (id: string, message: string) => {
+    sendNotification(id, "message", message);
   };
 
 
@@ -518,6 +556,7 @@ export default function AdminAppointmentsPage() {
         onApprove={handleApprove}
         onCancel={handleCancel}
         onComplete={handleComplete}
+        onSendCustomAlert={handleSendCustomAlert}
       />
 
       {/* Create New Appointment Drawer */}

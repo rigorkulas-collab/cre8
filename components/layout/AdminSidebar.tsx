@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Settings, 
   X,
-  Search
+  Search,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const menuItems = [
   { name: "Appointments", href: "/admin/appointments", icon: Calendar },
   { name: "Services", href: "/admin/services", icon: Scissors },
   { name: "Customers", href: "/admin/customers", icon: Users },
+  { name: "Stylists", href: "/admin/stylists", icon: Clock },
   { name: "Payments", href: "/admin/payments", icon: CreditCard },
   { name: "Reports", href: "/admin/reports", icon: BarChart3 },
   { name: "Settings", href: "/admin/settings", icon: Settings },

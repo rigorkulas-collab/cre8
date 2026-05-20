@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Drawer from "./Drawer";
 import StatusBadge from "@/components/shared/badges/StatusBadge";
 
@@ -21,6 +21,7 @@ interface AppointmentDetailsDrawerProps {
   onApprove?: (id: string) => void;
   onCancel?: (id: string) => void;
   onComplete?: (id: string) => void;
+  onSendCustomAlert?: (id: string, message: string) => void;
 }
 
 export default function AppointmentDetailsDrawer({
@@ -29,7 +30,16 @@ export default function AppointmentDetailsDrawer({
   onApprove,
   onCancel,
   onComplete,
+  onSendCustomAlert,
 }: AppointmentDetailsDrawerProps) {
+  const [alertMessage, setAlertMessage] = useState("");
+
+  useEffect(() => {
+    if (appointment) {
+      setAlertMessage("");
+    }
+  }, [appointment]);
+
   if (!appointment) return null;
 
   const hasActions = onApprove || onCancel || onComplete;
@@ -181,6 +191,38 @@ export default function AppointmentDetailsDrawer({
             {appointment.notes || "Customer requested styling with standard soft curling iron treatment. Prefers zero scented products if available."}
           </p>
         </div>
+
+        {/* Send Custom Alert to Customer */}
+        {onSendCustomAlert && (
+          <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              Send Alert/Message to Customer
+            </h4>
+            <div className="flex flex-col gap-2">
+              <textarea
+                value={alertMessage}
+                onChange={(e) => setAlertMessage(e.target.value)}
+                placeholder="Type a custom message, push reminder, or update notification to send to the client..."
+                rows={2}
+                className="w-full text-xs font-medium border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 focus:border-gray-905 dark:focus:border-gray-450 focus:outline-none bg-gray-50/20 dark:bg-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-600 text-gray-900 dark:text-gray-100 leading-normal"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (alertMessage.trim()) {
+                    onSendCustomAlert(appointment.id, alertMessage.trim());
+                    setAlertMessage("");
+                    alert("Notification message successfully pushed to customer inbox.");
+                  }
+                }}
+                disabled={!alertMessage.trim()}
+                className="self-end px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-wider text-white dark:text-gray-900 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              >
+                Send Message Alert
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Drawer>
   );

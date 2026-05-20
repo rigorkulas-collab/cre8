@@ -22,9 +22,16 @@ export default function BrowseServicesPage() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cre8_reviews");
+      if (stored) {
+        setReviews(JSON.parse(stored));
+      }
+    }
   }, []);
 
   const toggleServiceSelection = (id: string, e?: React.MouseEvent) => {
@@ -374,37 +381,93 @@ export default function BrowseServicesPage() {
           )
         }
       >
-        {selectedService && (
-          <div className="flex flex-col gap-5 animate-fade-in-quick">
-            <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700 rounded-xl p-4 transition-colors duration-200">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] font-extrabold text-gray-500 dark:text-gray-400 leading-none">
-                  Duration
-                </span>
-                <span className="text-xs font-extrabold text-gray-900 dark:text-gray-100 leading-none mt-1">
-                  {selectedService.duration}
-                </span>
+        {selectedService && (() => {
+          const serviceReviews = reviews.filter(
+            r => r.serviceName.toLowerCase().trim() === selectedService.name.toLowerCase().trim() && r.approved
+          );
+          const avgRating = serviceReviews.length > 0
+            ? (serviceReviews.reduce((sum, r) => sum + r.rating, 0) / serviceReviews.length).toFixed(1)
+            : "4.8";
+
+          return (
+            <div className="flex flex-col gap-5 animate-fade-in-quick">
+              <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700 rounded-xl p-4 transition-colors duration-200">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[9px] font-extrabold text-gray-500 dark:text-gray-400 leading-none">
+                    Duration
+                  </span>
+                  <span className="text-xs font-extrabold text-gray-900 dark:text-gray-100 leading-none mt-1">
+                    {selectedService.duration}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5 text-right">
+                  <span className="text-[9px] font-extrabold text-gray-500 dark:text-gray-400 leading-none">
+                    Rating
+                  </span>
+                  <span className="text-xs font-extrabold text-gray-900 dark:text-gray-100 leading-none mt-1">
+                    ★ {avgRating} ({serviceReviews.length} reviews)
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col gap-0.5 text-right">
-                <span className="text-[9px] font-extrabold text-gray-500 dark:text-gray-400 leading-none">
-                  Rating
+              
+              <div className="flex flex-col gap-2">
+                <span className="text-[9px] font-extrabold text-gray-500 dark:text-gray-400">
+                  Treatment Details
                 </span>
-                <span className="text-xs font-extrabold text-gray-900 dark:text-gray-100 leading-none mt-1">
-                  ★ {selectedService.rating || "4.8"}
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50/20 dark:bg-gray-800/10 border border-gray-100 dark:border-gray-800 rounded-xl p-4 transition-colors duration-200">
+                  {selectedService.description}
+                </p>
+              </div>
+
+              {/* Reviews Section */}
+              <div className="flex flex-col gap-3">
+                <span className="text-[9px] font-extrabold text-gray-500 dark:text-gray-400">
+                  Customer Reviews ({serviceReviews.length})
                 </span>
+                <div className="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-1">
+                  {serviceReviews.length > 0 ? (
+                    serviceReviews.map((rev, rIdx) => (
+                      <div key={rIdx} className="bg-gray-50/50 dark:bg-gray-850 border border-gray-100 dark:border-gray-800/60 rounded-xl p-3 flex flex-col gap-1 transition-colors duration-200">
+                        <div className="flex justify-between items-center select-none">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100">
+                              {rev.customerName}
+                            </span>
+                            <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500">
+                              ({rev.stylistName})
+                            </span>
+                          </div>
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: 5 }).map((_, sIdx) => (
+                              <span
+                                key={sIdx}
+                                className={`text-[9px] leading-none ${
+                                  sIdx < rev.rating ? "text-amber-500" : "text-gray-300 dark:text-gray-700"
+                                }`}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-[11px] font-medium text-gray-600 dark:text-gray-450 leading-normal">
+                          {rev.comment || "No comment provided."}
+                        </p>
+                        <span className="text-[8px] text-gray-400 text-right font-medium">
+                          {rev.date}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 border border-dashed border-gray-250 dark:border-gray-800 rounded-xl bg-gray-50/10">
+                      <span className="text-[10px] font-semibold text-gray-405">No public reviews left for this treatment yet.</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            
-            <div className="flex flex-col gap-2">
-              <span className="text-[9px] font-extrabold text-gray-500 dark:text-gray-400">
-                Treatment Details
-              </span>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50/20 dark:bg-gray-800/10 border border-gray-100 dark:border-gray-800 rounded-xl p-4 transition-colors duration-200">
-                {selectedService.description}
-              </p>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </Drawer>
 
       {/* Floating Sticky Selection Bar */}

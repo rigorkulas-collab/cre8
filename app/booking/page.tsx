@@ -71,6 +71,140 @@ function BookingPageContent() {
   const [cardCvc, setCardCvc] = useState("");
   const [paymentErrors, setPaymentErrors] = useState<{ [key: string]: string }>({});
 
+  // Loyalty Program States
+  const [loyaltyPoints, setLoyaltyPoints] = useState(150);
+  const [loyaltyTiers, setLoyaltyTiers] = useState<Array<{ id: string; title: string; points: number; discount: number }>>([
+    { id: "rew-100", title: "₱150 Voucher", points: 100, discount: 150 },
+    { id: "rew-200", title: "₱350 Voucher", points: 200, discount: 350 },
+    { id: "rew-300", title: "₱600 Voucher", points: 300, discount: 600 }
+  ]);
+  const [appliedReward, setAppliedReward] = useState<{ id: string; title: string; points: number; discount: number } | null>(null);
+
+  // Shift & Leave States
+  const [stylists, setStylists] = useState<Staff[]>([]);
+  const [stylistShifts, setStylistShifts] = useState<any[]>([]);
+  const [stylistLeaves, setStylistLeaves] = useState<any[]>([]);
+  const [appointmentsList, setAppointmentsList] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cre8_customer_loyalty");
+      if (stored) {
+        setLoyaltyPoints(JSON.parse(stored).points);
+      }
+      
+      const storedTiers = localStorage.getItem("cre8_loyalty_tiers");
+      if (storedTiers) {
+        setLoyaltyTiers(JSON.parse(storedTiers));
+      } else {
+        localStorage.setItem("cre8_loyalty_tiers", JSON.stringify([
+          { id: "rew-100", title: "₱150 Voucher", points: 100, discount: 150 },
+          { id: "rew-200", title: "₱350 Voucher", points: 200, discount: 350 },
+          { id: "rew-300", title: "₱600 Voucher", points: 300, discount: 600 }
+        ]));
+      }
+
+      // Load stylists profiles
+      const storedStylists = localStorage.getItem("cre8_stylists");
+      let activeStylists = [];
+      if (storedStylists) {
+        activeStylists = JSON.parse(storedStylists);
+      } else {
+        activeStylists = mockStylists.filter(s => s.id !== "STL-004");
+        localStorage.setItem("cre8_stylists", JSON.stringify(activeStylists));
+      }
+      
+      const anyStylist = mockStylists.find(s => s.id === "STL-004") || {
+        id: "STL-004",
+        name: "Any Stylist",
+        role: "No Preference / First Available",
+        rating: "4.9"
+      };
+      
+      const completeStylists = [...activeStylists, anyStylist];
+      setStylists(completeStylists);
+      
+      const defaultStylist = completeStylists.find(s => s.id === "STL-004") || anyStylist;
+      setSelectedStylist(defaultStylist);
+
+      // Load shifts, leaves, and appointments for slot validation
+      const defaultWeeklySchedule = {
+        Monday: { isOpen: true, openTime: "09:00 AM", closeTime: "08:00 PM" },
+        Tuesday: { isOpen: true, openTime: "09:00 AM", closeTime: "08:00 PM" },
+        Wednesday: { isOpen: true, openTime: "09:00 AM", closeTime: "08:00 PM" },
+        Thursday: { isOpen: true, openTime: "09:00 AM", closeTime: "09:00 PM" },
+        Friday: { isOpen: true, openTime: "09:00 AM", closeTime: "09:00 PM" },
+        Saturday: { isOpen: true, openTime: "08:00 AM", closeTime: "09:00 PM" },
+        Sunday: { isOpen: false, openTime: "08:00 AM", closeTime: "08:00 PM" }
+      };
+
+      const defaultStylistShifts = [
+        {
+          stylistId: "STL-001",
+          stylistName: "Alex River",
+          role: "Senior Stylist",
+          schedule: {
+            ...defaultWeeklySchedule,
+            Sunday: { isOpen: false, openTime: "08:00 AM", closeTime: "08:00 PM" }
+          }
+        },
+        {
+          stylistId: "STL-002",
+          stylistName: "Jo Jordan",
+          role: "Nail Artist",
+          schedule: {
+            ...defaultWeeklySchedule,
+            Monday: { isOpen: false, openTime: "09:00 AM", closeTime: "08:00 PM" },
+            Sunday: { isOpen: true, openTime: "08:00 AM", closeTime: "08:00 PM" }
+          }
+        },
+        {
+          stylistId: "STL-003",
+          stylistName: "Maria Cruz",
+          role: "Skin Therapist",
+          schedule: {
+            ...defaultWeeklySchedule,
+            Tuesday: { isOpen: false, openTime: "09:00 AM", closeTime: "08:00 PM" },
+            Sunday: { isOpen: true, openTime: "08:00 AM", closeTime: "08:00 PM" }
+          }
+        }
+      ];
+
+      const defaultLeaves = [
+        {
+          id: "LV-001",
+          stylistId: "STL-003",
+          stylistName: "Maria Cruz",
+          date: "2026-05-22",
+          reason: "Family Vacation Out of Town"
+        }
+      ];
+
+      const storedShifts = localStorage.getItem("cre8_stylist_shifts");
+      if (storedShifts) {
+        setStylistShifts(JSON.parse(storedShifts));
+      } else {
+        setStylistShifts(defaultStylistShifts);
+        localStorage.setItem("cre8_stylist_shifts", JSON.stringify(defaultStylistShifts));
+      }
+
+      const storedLeaves = localStorage.getItem("cre8_stylist_leaves");
+      if (storedLeaves) {
+        setStylistLeaves(JSON.parse(storedLeaves));
+      } else {
+        setStylistLeaves(defaultLeaves);
+        localStorage.setItem("cre8_stylist_leaves", JSON.stringify(defaultLeaves));
+      }
+
+      const storedApts = localStorage.getItem("cre8_appointments");
+      if (storedApts) {
+        setAppointmentsList(JSON.parse(storedApts));
+      } else {
+        setAppointmentsList([]);
+      }
+    }
+  }, []);
+
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
     const formatted = rawVal.match(/.{1,4}/g)?.join(" ") || rawVal;
@@ -122,6 +256,93 @@ function BookingPageContent() {
       durationStr: `${durationSum} Min`
     };
   }, [activeServices]);
+
+  const finalPricing = useMemo(() => {
+    const rawPrice = totalPricing.priceRaw;
+    const discount = appliedReward ? appliedReward.discount : 0;
+    const finalPrice = Math.max(0, rawPrice - discount);
+    return {
+      priceRaw: finalPrice,
+      priceStr: `₱${finalPrice.toLocaleString()}`,
+      discountStr: discount > 0 ? `-₱${discount.toLocaleString()}` : "",
+      originalPriceStr: totalPricing.priceStr,
+      durationStr: totalPricing.durationStr
+    };
+  }, [totalPricing, appliedReward]);
+
+  const dynamicTimeSlots = useMemo(() => {
+    if (!selectedDay) return [];
+    
+    const dateObj = new Date(selectedDay.dateStr);
+    const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayOfWeekName = weekdays[dateObj.getDay()];
+
+    const parseTimeToMinutes = (t: string) => {
+      const [timePart, modifier] = t.split(" ");
+      let [hours, minutes] = timePart.split(":").map(Number);
+      if (modifier === "PM" && hours !== 12) hours += 12;
+      if (modifier === "AM" && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    };
+
+    const isStylistAvailable = (stylistId: string, stylistName: string, slotTime: string) => {
+      const staffShift = stylistShifts.find(s => s.stylistId === stylistId);
+      if (!staffShift) return false;
+      const daySched = staffShift.schedule[dayOfWeekName];
+      if (!daySched || !daySched.isOpen) return false;
+
+      const slotMin = parseTimeToMinutes(slotTime);
+      const openMin = parseTimeToMinutes(daySched.openTime);
+      const closeMin = parseTimeToMinutes(daySched.closeTime);
+
+      if (slotMin < openMin || slotMin >= closeMin) return false;
+
+      const onLeave = stylistLeaves.some(
+        l => l.stylistId === stylistId && l.date === selectedDay.dateStr
+      );
+      if (onLeave) return false;
+
+      const isBooked = appointmentsList.some(
+        a => a.stylistName === stylistName && 
+             a.date === selectedDay.fullStr && 
+             a.time === slotTime && 
+             a.status !== "cancelled"
+      );
+      if (isBooked) return false;
+
+      return true;
+    };
+
+    const standardSlots = [
+      "09:00 AM",
+      "10:00 AM",
+      "11:00 AM",
+      "01:00 PM",
+      "02:00 PM",
+      "03:00 PM",
+      "04:00 PM",
+      "05:00 PM",
+      "06:00 PM",
+      "07:00 PM",
+      "08:00 PM"
+    ];
+
+    return standardSlots.map(timeStr => {
+      let isAvailable = false;
+
+      if (selectedStylist && selectedStylist.id !== "STL-004") {
+        isAvailable = isStylistAvailable(selectedStylist.id, selectedStylist.name, timeStr);
+      } else {
+        const actualStylists = stylists.filter(s => s.id !== "STL-004");
+        isAvailable = actualStylists.some(s => isStylistAvailable(s.id, s.name, timeStr));
+      }
+
+      return {
+        time: timeStr,
+        available: isAvailable
+      };
+    });
+  }, [selectedDay, selectedStylist, stylistShifts, stylistLeaves, appointmentsList]);
 
   // Set default day selection
   useEffect(() => {
@@ -181,23 +402,127 @@ function BookingPageContent() {
     setBookingRef(generatedRef);
 
     if (typeof window !== "undefined") {
+      let stylistToAssign = selectedStylist ? selectedStylist.name : "First Available";
+      if (selectedStylist && selectedStylist.id === "STL-004" && selectedDay) {
+        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const dayOfWeekName = weekdays[new Date(selectedDay.dateStr).getDay()];
+
+        const parseTimeToMinutes = (t: string) => {
+          const [timePart, modifier] = t.split(" ");
+          let [hours, minutes] = timePart.split(":").map(Number);
+          if (modifier === "PM" && hours !== 12) hours += 12;
+          if (modifier === "AM" && hours === 12) hours = 0;
+          return hours * 60 + minutes;
+        };
+
+        const actualStylists = stylists.filter(s => s.id !== "STL-004");
+        const availableOne = actualStylists.find(s => {
+          const staffShift = stylistShifts.find(sh => sh.stylistId === s.id);
+          if (!staffShift) return false;
+          const daySched = staffShift.schedule[dayOfWeekName];
+          if (!daySched || !daySched.isOpen) return false;
+
+          const slotMin = parseTimeToMinutes(selectedTimeSlot || "09:00 AM");
+          const openMin = parseTimeToMinutes(daySched.openTime);
+          const closeMin = parseTimeToMinutes(daySched.closeTime);
+          if (slotMin < openMin || slotMin >= closeMin) return false;
+
+          const onLeave = stylistLeaves.some(
+            l => l.stylistId === s.id && l.date === selectedDay.dateStr
+          );
+          if (onLeave) return false;
+
+          const isBooked = appointmentsList.some(
+            a => a.stylistName === s.name && 
+                 a.date === selectedDay.fullStr && 
+                 a.time === selectedTimeSlot && 
+                 a.status !== "cancelled"
+          );
+          if (isBooked) return false;
+
+          return true;
+        });
+
+        if (availableOne) {
+          stylistToAssign = availableOne.name;
+        }
+      }
+
       const newApt = {
         id: `APT-${Math.floor(100 + Math.random() * 900)}`,
         serviceId: activeServices.map(s => s.id).join(","),
         serviceName: activeServices.map(s => s.name).join(" + "),
         category: activeServices[0].category,
-        stylistName: selectedStylist ? selectedStylist.name : "First Available",
+        stylistName: stylistToAssign,
         date: selectedDay?.fullStr || "May 20, 2026",
         time: selectedTimeSlot || "09:00 AM",
-        price: totalPricing.priceStr,
+        price: finalPricing.priceStr,
         duration: totalPricing.durationStr,
-        status: "confirmed",
+        status: "confirmed" as const,
         refCode: generatedRef
       };
       
       const stored = localStorage.getItem("cre8_appointments");
       const currentList = stored ? JSON.parse(stored) : [];
-      localStorage.setItem("cre8_appointments", JSON.stringify([newApt, ...currentList]));
+      const updatedList = [newApt, ...currentList];
+      localStorage.setItem("cre8_appointments", JSON.stringify(updatedList));
+      setAppointmentsList(updatedList);
+
+      // Update loyalty points in localStorage
+      const storedLoyalty = localStorage.getItem("cre8_customer_loyalty");
+      const currentLoyalty = storedLoyalty ? JSON.parse(storedLoyalty) : { points: 150, tier: "Silver Member" };
+      
+      let newPoints = currentLoyalty.points;
+      if (appliedReward) {
+        newPoints = Math.max(0, newPoints - appliedReward.points);
+      }
+      
+      // Earn points: 10% of checkout price paid
+      const earned = Math.round(finalPricing.priceRaw * 0.1);
+      newPoints += earned;
+      
+      let newTier = "Bronze Member";
+      if (newPoints >= 300) {
+        newTier = "Gold Member";
+      } else if (newPoints >= 100) {
+        newTier = "Silver Member";
+      }
+      
+      const updatedLoyalty = { points: newPoints, tier: newTier };
+      localStorage.setItem("cre8_customer_loyalty", JSON.stringify(updatedLoyalty));
+
+      // Log redemption entry
+      if (appliedReward) {
+        const redemptionLog = {
+          id: `RED-${Math.floor(1000 + Math.random() * 9000)}`,
+          customerName: "Zachary Cruz",
+          customerEmail: "zachary@example.com",
+          rewardTitle: appliedReward.title,
+          pointsSpent: appliedReward.points,
+          date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        };
+        const currentLogs = localStorage.getItem("cre8_customer_redemptions");
+        const logsList = currentLogs ? JSON.parse(currentLogs) : [];
+        localStorage.setItem("cre8_customer_redemptions", JSON.stringify([redemptionLog, ...logsList]));
+      }
+
+      // Update in admin customer list
+      const customersStored = localStorage.getItem("cre8_customers");
+      if (customersStored) {
+        const parsedCusts = JSON.parse(customersStored);
+        const updatedCusts = parsedCusts.map((c: any) => {
+          if (c.email === "zachary@example.com") {
+            return {
+              ...c,
+              totalBookings: c.totalBookings + 1,
+              loyaltyPoints: newPoints,
+              loyaltyTier: newTier
+            };
+          }
+          return c;
+        });
+        localStorage.setItem("cre8_customers", JSON.stringify(updatedCusts));
+      }
     }
 
     setIsConfirming(true);
@@ -319,7 +644,7 @@ function BookingPageContent() {
 
               {/* Stylists Vertical Stack */}
               <div className="flex flex-col gap-3 select-none">
-                {mockStylists.map((stylist, index) => {
+                {stylists.map((stylist, index) => {
                   const isSelected = selectedStylist?.id === stylist.id;
                   
                   // Generate circular initials
@@ -453,7 +778,7 @@ function BookingPageContent() {
 
               {/* Time Slots Grid */}
               <div className="grid grid-cols-2 gap-3 select-none">
-                {mockTimeSlots.map((slot, index) => {
+                {dynamicTimeSlots.map((slot, index) => {
                   const isSelected = selectedTimeSlot === slot.time;
                   return (
                     <button
@@ -462,7 +787,7 @@ function BookingPageContent() {
                       onClick={() => setSelectedTimeSlot(slot.time)}
                       className={cn(
                         "py-4 px-5 rounded-2xl border text-sm font-bold transition-all duration-150 active:scale-95 cursor-pointer transition-colors duration-150",
-                        !slot.available && "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed",
+                        !slot.available && "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50",
                         slot.available && !isSelected && "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:border-gray-900 dark:hover:border-gray-100",
                         slot.available && isSelected && "bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100 text-white dark:text-gray-900 shadow-xs"
                       )}
@@ -501,12 +826,23 @@ function BookingPageContent() {
                       <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{service.price}</span>
                     </div>
                   ))}
-                  {activeServices.length > 1 && (
-                    <div className="flex justify-between items-center text-xs font-extrabold border-t border-gray-100 dark:border-gray-700/50 pt-2 text-gray-900 dark:text-white mt-1">
-                      <span>Total Price:</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">{totalPricing.priceStr}</span>
+                  
+                  <div className="flex justify-between items-center text-xs font-extrabold border-t border-gray-100 dark:border-gray-700/50 pt-2 text-gray-900 dark:text-white mt-1">
+                    <span>Subtotal:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{totalPricing.priceStr}</span>
+                  </div>
+
+                  {appliedReward && (
+                    <div className="flex justify-between items-center text-xs font-bold text-amber-600 dark:text-amber-400">
+                      <span>Loyalty Reward ({appliedReward.title}):</span>
+                      <span>{finalPricing.discountStr}</span>
                     </div>
                   )}
+
+                  <div className="flex justify-between items-center text-xs font-extrabold border-t border-gray-100 dark:border-gray-700/50 pt-2 text-gray-900 dark:text-white mt-1">
+                    <span>Total Price:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{finalPricing.priceStr}</span>
+                  </div>
                 </div>
 
                 {/* Stylist */}
@@ -545,6 +881,72 @@ function BookingPageContent() {
                   <span className="font-extrabold text-gray-900 dark:text-gray-100">{totalPricing.durationStr}</span>
                 </div>
 
+              </div>
+
+              {/* Loyalty Reward Selector Block */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 flex flex-col gap-4 shadow-2xs text-left">
+                <div className="flex justify-between items-center select-none">
+                  <div className="flex flex-col gap-0.5">
+                    <label className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+                      Loyalty Points Program
+                    </label>
+                    <span className="text-xs font-bold text-gray-900 dark:text-gray-100 mt-1">
+                      Your Balance: <span className="font-extrabold text-amber-600">{loyaltyPoints} Points</span>
+                    </span>
+                  </div>
+                  {appliedReward && (
+                    <button 
+                      onClick={() => setAppliedReward(null)}
+                      className="text-[10px] font-bold text-red-650 dark:text-red-400 hover:underline cursor-pointer"
+                    >
+                      Clear Reward
+                    </button>
+                  )}
+                </div>
+
+                <div className="h-px bg-gray-100 dark:bg-gray-700" />
+
+                <div className="flex flex-col gap-2">
+                  <span className="text-[9.5px] font-bold text-gray-500">Select an eligible reward to redeem:</span>
+                  <div className="flex flex-col gap-2">
+                    {loyaltyTiers.map((reward) => {
+                      const isEligible = loyaltyPoints >= reward.points;
+                      const isSelected = appliedReward?.id === reward.id;
+                      
+                      return (
+                        <button
+                          key={reward.id}
+                          type="button"
+                          disabled={!isEligible}
+                          onClick={() => {
+                            if (isEligible) {
+                              setAppliedReward(reward);
+                            }
+                          }}
+                          className={cn(
+                            "flex items-center justify-between p-3.5 rounded-xl border text-xs font-semibold transition-all text-left",
+                            isSelected
+                              ? "border-gray-900 dark:border-gray-100 bg-gray-900/5 dark:bg-gray-100/5 font-extrabold text-gray-900 dark:text-gray-100"
+                              : isEligible
+                                ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-850 dark:text-gray-200 cursor-pointer"
+                                : "border-gray-100 dark:border-gray-800/60 opacity-45 text-gray-400 cursor-not-allowed"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "h-4 w-4 rounded-full border flex items-center justify-center shrink-0",
+                              isSelected ? "border-gray-900 dark:border-gray-100 bg-gray-900/5 dark:bg-gray-100/5" : "border-gray-300"
+                            )}>
+                              {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-gray-900 dark:bg-white" />}
+                            </div>
+                            <span>{reward.title}</span>
+                          </div>
+                          <span className="font-bold text-amber-600 shrink-0">Cost: {reward.points} pts</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Special appointment instructions notes */}
