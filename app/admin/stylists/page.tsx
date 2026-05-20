@@ -572,7 +572,7 @@ export default function AdminStylistsPage() {
         onClose={() => setSelectedStylistShifts(null)}
         title="Roster Shift Hours"
         description={`Set standard weekly operational hours and off-days for ${selectedStylistShifts?.stylistName}.`}
-        size="md"
+        size="lg"
         footer={
           <div className="flex justify-end gap-3 select-none">
             <button
@@ -598,13 +598,13 @@ export default function AdminStylistsPage() {
               return (
                 <div 
                   key={day}
-                  className={`grid grid-cols-1 sm:grid-cols-4 items-center gap-4 px-4 py-3 rounded-lg border transition-all ${
+                  className={`grid grid-cols-1 sm:grid-cols-12 items-center gap-4 px-4 py-3 rounded-lg border transition-all ${
                     sched.isOpen 
                       ? "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800" 
                       : "bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 opacity-60"
                   }`}
                 >
-                  <div className="sm:col-span-1 flex items-center justify-between sm:justify-start gap-4">
+                  <div className="sm:col-span-4 flex items-center justify-between sm:justify-start gap-4">
                     <button
                       type="button"
                       onClick={() => {
@@ -628,7 +628,7 @@ export default function AdminStylistsPage() {
 
                   {sched.isOpen ? (
                     <>
-                      <div className="sm:col-span-1.5 flex flex-col gap-1">
+                      <div className="sm:col-span-4 flex flex-col gap-1">
                         <label className="text-[10px] font-semibold text-gray-400">Open Shift</label>
                         <select
                           value={sched.openTime}
@@ -650,7 +650,7 @@ export default function AdminStylistsPage() {
                         </select>
                       </div>
 
-                      <div className="sm:col-span-1.5 flex flex-col gap-1">
+                      <div className="sm:col-span-4 flex flex-col gap-1">
                         <label className="text-[10px] font-semibold text-gray-400">Close Shift</label>
                         <select
                           value={sched.closeTime}
@@ -675,7 +675,7 @@ export default function AdminStylistsPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="sm:col-span-3 text-[11px] font-medium text-gray-400 py-1">
+                    <div className="sm:col-span-8 text-[11px] font-medium text-gray-400 py-1">
                       Stylist is scheduled Off-Duty for this day.
                     </div>
                   )}
