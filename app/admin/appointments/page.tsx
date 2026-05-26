@@ -10,6 +10,7 @@ import StatusBadge from "@/components/shared/badges/StatusBadge";
 import TableToolbar from "@/components/tables/TableToolbar";
 import AppointmentDetailsDrawer from "@/components/shared/AppointmentDetailsDrawer";
 import Drawer from "@/components/shared/Drawer";
+import { mockServices } from "@/lib/mock-data/mockServices";
 import { 
   Calendar, 
   Users, 
@@ -116,6 +117,25 @@ export default function AdminAppointmentsPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // Load services
+      const storedServices = localStorage.getItem("cre8_services");
+      let services = [];
+      if (storedServices) {
+        try {
+          services = JSON.parse(storedServices);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      if (!services || services.length === 0) {
+        services = mockServices;
+      }
+      setServicesList(services);
+      if (services.length > 0) {
+        setSelectedServices([services[0].id]);
+      }
+
+      // Load appointments
       const stored = localStorage.getItem("cre8_appointments");
       if (stored) {
         try {
@@ -150,33 +170,41 @@ export default function AdminAppointmentsPage() {
   // New Appointment Form States
   const [isNewDrawerOpen, setIsNewDrawerOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState("");
-  const [newService, setNewService] = useState("Premium Cut");
+  const [servicesList, setServicesList] = useState<any[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [newStaff, setNewStaff] = useState("Alex Rivera");
   const [newTime, setNewTime] = useState("09:00 AM");
   const [newNotes, setNewNotes] = useState("");
 
-  const servicePrices: Record<string, string> = {
-    "Premium Cut": "₱500",
-    "Hair Color": "₱2,500",
-    "Beard Sculpt": "₱350",
-    "Keratin Rebond": "₱3,500",
-    "Manicure & Gel": "₱650",
-    "Deep Facial Glow": "₱1,200",
-    "Scalp Massage": "₱850",
-    "Ultimate Royal Package": "₱4,500",
-  };
-
   const handleCreateAppointment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCustomer.trim()) return;
+    if (!newCustomer.trim() || selectedServices.length === 0) return;
+
+    const chosenServicesObj = servicesList.filter(s => selectedServices.includes(s.id));
+    const combinedServiceName = chosenServicesObj.map(s => s.name).join(" + ");
+    const combinedServiceIds = chosenServicesObj.map(s => s.id).join(",");
+    
+    // Sum prices
+    const totalRawPrice = chosenServicesObj.reduce((sum, s) => {
+      const val = parseInt(s.price.replace(/[^0-9]/g, ""), 10) || 0;
+      return sum + val;
+    }, 0);
+    const combinedPriceStr = `₱${totalRawPrice.toLocaleString()}`;
+
+    // Sum durations
+    const totalRawDuration = chosenServicesObj.reduce((sum, s) => {
+      const val = parseInt(s.duration.replace(/[^0-9]/g, ""), 10) || 0;
+      return sum + val;
+    }, 0);
+    const combinedDurationStr = `${totalRawDuration} Min`;
 
     const newApt: Appointment = {
       id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
       customerName: newCustomer,
-      serviceName: newService,
+      serviceName: combinedServiceName,
       staffName: newStaff,
       time: newTime,
-      price: servicePrices[newService] || "₱500",
+      price: combinedPriceStr,
       status: "confirmed", // default to confirmed when created by admin directly
       notes: newNotes,
     };
@@ -186,14 +214,14 @@ export default function AdminAppointmentsPage() {
       if (typeof window !== "undefined") {
         const customerApt = {
           id: newApt.id,
-          serviceId: "SRV-001",
+          serviceId: combinedServiceIds,
           serviceName: newApt.serviceName,
-          category: "Hair",
+          category: chosenServicesObj[0]?.category || "Hair",
           stylistName: newApt.staffName,
           date: "May 20, 2026",
           time: newApt.time,
           price: newApt.price,
-          duration: "45 Min",
+          duration: combinedDurationStr,
           status: newApt.status,
           refCode: `CRE8-${newApt.id.substring(4)}`,
           notes: newApt.notes,
@@ -208,7 +236,7 @@ export default function AdminAppointmentsPage() {
     
     // reset form states
     setNewCustomer("");
-    setNewService("Premium Cut");
+    setSelectedServices(servicesList.length > 0 ? [servicesList[0].id] : []);
     setNewStaff("Alex Rivera");
     setNewTime("09:00 AM");
     setNewNotes("");
@@ -576,7 +604,7 @@ export default function AdminAppointmentsPage() {
             </button>
             <button
               onClick={handleCreateAppointment}
-              disabled={!newCustomer.trim()}
+              disabled={!newCustomer.trim() || selectedServices.length === 0}
               className="px-3.5 py-2 text-xs font-bold bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
             >
               Create Appointment
@@ -600,25 +628,67 @@ export default function AdminAppointmentsPage() {
             />
           </div>
 
-          {/* Service Selector */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              Select Service
-            </label>
-            <select
-              value={newService}
-              onChange={(e) => setNewService(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-gray-400/20 focus:border-gray-900 dark:focus:border-gray-500 transition-all text-sm text-gray-900 dark:text-gray-100 cursor-pointer"
-            >
-              <option value="Premium Cut">Premium Cut (₱500)</option>
-              <option value="Hair Color">Hair Color (₱2,500)</option>
-              <option value="Beard Sculpt">Beard Sculpt (₱350)</option>
-              <option value="Keratin Rebond">Keratin Rebond (₱3,500)</option>
-              <option value="Manicure & Gel">Manicure & Gel (₱650)</option>
-              <option value="Deep Facial Glow">Deep Facial Glow (₱1,200)</option>
-              <option value="Scalp Massage">Scalp Massage (₱850)</option>
-              <option value="Ultimate Royal Package">Ultimate Royal Package (₱4,500)</option>
-            </select>
+          {/* Service Selector (Multi-select Checklist) */}
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                Select Services
+              </label>
+              <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">
+                {selectedServices.length} selected
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-2 max-h-[180px] overflow-y-auto pr-1 border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-850">
+              {servicesList.map((service) => {
+                const isSelected = selectedServices.includes(service.id);
+                return (
+                  <label
+                    key={service.id}
+                    className={`flex items-center justify-between p-2.5 rounded-lg border text-left cursor-pointer transition-all duration-150 active:scale-[0.99] select-none ${
+                      isSelected
+                        ? "bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900"
+                        : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-750 hover:bg-gray-50/50 dark:hover:bg-gray-700/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setSelectedServices(prev =>
+                            prev.includes(service.id)
+                              ? prev.filter(id => id !== service.id)
+                              : [...prev, service.id]
+                          );
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-900/10 accent-indigo-600 dark:accent-indigo-400 cursor-pointer"
+                      />
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
+                          {service.name}
+                        </span>
+                        <span className="text-[10px] font-semibold text-gray-450 dark:text-gray-500">
+                          {service.category} · {service.duration}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0">
+                      {service.price}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            {selectedServices.length > 0 && (
+              <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 bg-gray-50 dark:bg-gray-800/40 p-2 rounded-lg border border-gray-100 dark:border-gray-805">
+                <span>Combined Summary:</span>
+                <span className="text-indigo-600 dark:text-indigo-400">
+                  {servicesList.filter(s => selectedServices.includes(s.id)).reduce((sum, s) => sum + (parseInt(s.duration.replace(/[^0-9]/g, ""), 10) || 0), 0)} Min
+                  {" · "}
+                  ₱{servicesList.filter(s => selectedServices.includes(s.id)).reduce((sum, s) => sum + (parseInt(s.price.replace(/[^0-9]/g, ""), 10) || 0), 0).toLocaleString()}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Stylist Selector */}
